@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
 var unrest = require('./index.js');
-var vorpal = require('vorpal')();
+const vorpal = require('vorpal')();
 var fs = require('fs');
 
 var configFile = './unrest.config.json';
 var testConfigFile = './tests.json';
 
-console.log("Directory: " + process.cwd());
+//console.log("Directory: " + process.cwd());
 
 // load config file 
-console.log("Reading default config file..")
+//console.log("Reading default config file..")
 var config = JSON.parse(fs.readFileSync(configFile));
-console.log("Configuration file loaded");
+//console.log("Configuration file loaded");
 var testConfig = JSON.parse(fs.readFileSync(testConfigFile));
 
 function dataFromCmdLineParams(data, delimiter){
@@ -90,14 +90,16 @@ vorpal.command('get <target> ', 'Performs GET request').
   action(function(args, callback){
    var target = args.target;
    var reqConfig = createRequestConfig(target, args.options);
-    console.log("target: " + args.target);
-    console.log('request config: ' + JSON.stringify(reqConfig));
+  // copy of command instance. Used to invoke logging in REST callback
+  var cmd = this;
   if(testConfig[target] != null){
-    unrest.get(config, function(){
+    unrest.get(reqConfig, function(output){
+      cmd.log(output);
       callback()
     });
   } else {
-    unrest.getDirect(target, reqConfig, function(){
+    unrest.getDirect(target, reqConfig, function(output){
+      cmd.log(output);
       callback();
     });
   }
@@ -112,20 +114,56 @@ vorpal.command('post <target>', 'Performs POST request').
   action(function(args, callback){
     var target = args.target;
     var reqConfig = createRequestConfig(target, args.options);
-    console.log("target: " + args.target);
-    console.log('request config: ' + JSON.stringify(reqConfig));
+    // copy of command instance. Used to invoke logging in REST callback
+    var cmd = this;
     if(testConfig[target] != null){
-      unrest.post(reqConfig, function(){
+      unrest.post(reqConfig, function(output){
+	cmd.log(output);
 	callback();
       });
       
     } else {
-      unrest.postDirect(target, reqConfig, function(){
+      unrest.postDirect(target, reqConfig, function(output){
+	cmd.log(output);
 	callback();
       });
     }
     
 });
+  
+vorpal.command('extract [object]', 'Extracts specific value from JSON object').
+  option('-h, --header <value>', "Extracts value of specified response header. Header name is case-insensitive.").
+  option('-b, --body', 'Extracts response body').
+  option('-s, --status', 'Extracts response status code').
+  action(function(args, callback){
+    //console.log("extract: " + JSON.stringify(args.stdin));
+    var input = {};
+    if(args.object != null){
+      input = JSON.parse(args.object);
+    } else if(args.stdin != null){
+      // stdin is array, we need first element
+      input = args.stdin[0];
+    }
+    if(args.options.header != null){
+      var search = args.options.header.toLowerCase();
+      for(var header in input.headers){
+	if(header.toLowerCase() === search){
+	    this.log(input.headers[header]);
+	    break;
+	}
+      }
+    }
+    // extract body
+    if(args.options.body != null){
+      this.log(input.body);
+    }
+    // extract status
+    if(args.options.status != null){
+      this.log(input.statusCode);
+    }
+    callback();
+  });
+  
 
 
 vorpal.delimiter("unrest>").show();

@@ -5,36 +5,41 @@ var prettyjson = require('prettyjson');
 
 var unrest = {};
 
+function formatResponse(raw, data){
+  var response = {};
+  response.statusCode = raw.statusCode;
+  response.statusMessage = raw.statusMessage;
+  response.headers = raw.headers;
+  if(data != null){
+    response.body = data;
+  }
+  
+  return response;
+}
+
 
 unrest.getDirect = function(url, config, callback){
-  var client = new RestClient();
+  var client = new RestClient(config);
   client.get(url, config, function(data, response){
-    console.log(response.headers);
-    console.log(data);
-    callback();
+    var output = formatResponse(response, data);
+    callback(output);
   });
 }
 
 unrest.get = function(config, callback) {
-  //console.log("UnREST GET");
-  var client = new RestClient(config.client);
-  client.get(config.defaults.host + "/api/docrepo/content/list?path=/folder1",config.defaults, function (data, response) {
-    // parsed response body as js object
-    console.log(prettyjson.render(data));
-    //console.log(data);
-    console.log(prettyjson.render(response.headers));
-    // raw response
-    //console.log(response);
-    callback()
+  var client = new RestClient(config);
+  var target = config.host + config.endpoint;
+  client.get(target, config, function (data, response) {
+    var output = formatResponse(response, data);
+    callback(output);
 });
 }
 
 unrest.postDirect = function(url, config, callback){
   var client = new RestClient(config);
   client.post(url, config, function(data, response){
-    console.log(response.headers);
-    console.log(data);
-    callback();
+    var output = formatResponse(response, data);
+    callback(output);
   });
 }
 
@@ -43,9 +48,8 @@ unrest.post = function(config, callback) {
   var target = config.host + config.endpoint;
   
   client.post(target, config, function(data, response){
-    console.log(response.headers);
-    console.log(data);
-    callback();
+    var output = formatResponse(response, data);
+    callback(output);
   });
   
 }
