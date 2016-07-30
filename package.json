@@ -1,0 +1,24 @@
+{
+  "name": "unrest",
+  "version": "1.0.0",
+  "description": "CLI REST client",
+  "main": "index.js",
+  "bin": {
+    "unrest": "unrest-cli.js"
+  },
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "rest",
+    "cli",
+    "scriptable"
+  ],
+  "author": "Vladimir Djurovic",
+  "license": "MIT",
+  "dependencies": {
+    "node-rest-client": "^2.0.1",
+    "prettyjson": "^1.1.3",
+    "vorpal": "^1.11.2"
+  }
+}
