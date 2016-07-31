@@ -3,6 +3,7 @@
 var unrest = require('./index.js');
 const vorpal = require('vorpal')();
 var fs = require('fs');
+var dummy = require('dummy-json');
 
 var configFile = './unrest.config.json';
 var testConfigFile = './tests.json';
@@ -11,29 +12,34 @@ var testConfigFile = './tests.json';
 
 // load config file 
 //console.log("Reading default config file..")
-var config = JSON.parse(fs.readFileSync(configFile));
+var defaultConfig = JSON.parse(fs.readFileSync(configFile));
 //console.log("Configuration file loaded");
-var testConfig = JSON.parse(fs.readFileSync(testConfigFile));
+var defaultTestConfig = JSON.parse(fs.readFileSync(testConfigFile));
+
+var session = {};
 
 function dataFromCmdLineParams(data, delimiter){
   var out = {};
+  // strip possible single quotes
+  data = data.replace(/='/,"=").replace(/'$/,"");
   if(Array.isArray(data)){
     for(var i = 0;i < data.length;i++){
       var s = data[i].split(delimiter);
       // trim value and remove starting/trailing single quote from string
-      out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "");;
+      out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "").replace(/\b\\'|\\'\b/g, "");
     }
   } else {
      var s = data.split(delimiter);
       // trim value and remove starting/trailing single quote from string
-      out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "");
+      out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "").replace(/\b\'|\'\b/g, "");
   }
-  
   return out;
 }
 
 function createRequestConfig(target, options){
   var reqConfig = {};
+  var config = JSON.parse(dummy.parse(JSON.stringify(defaultConfig), {mockdata: session}));
+  var testConfig = JSON.parse(dummy.parse(JSON.stringify(defaultTestConfig), {mockdata: session}));
   reqConfig.host = config.defaults.host;
   reqConfig['headers'] = config.defaults.headers;
   // setup client config
@@ -70,9 +76,9 @@ function createRequestConfig(target, options){
   }
   if(options['query-param'] != null){
     var optQueryParams = dataFromCmdLineParams(options['query-param'], '=');
-    reqConfig['param'] = {};
+    reqConfig['parameters'] = {};
     for(var qp in optQueryParams){
-      reqConfig.param[qp] = optQueryParams[qp];
+      reqConfig.parameters[qp] = optQueryParams[qp];
     }
   }
   if(options['req-content'] != null){
@@ -92,7 +98,7 @@ vorpal.command('get <target> ', 'Performs GET request').
    var reqConfig = createRequestConfig(target, args.options);
   // copy of command instance. Used to invoke logging in REST callback
   var cmd = this;
-  if(testConfig[target] != null){
+  if(defaultTestConfig[target] != null){
     unrest.get(reqConfig, function(output){
       cmd.log(output);
       callback()
@@ -116,7 +122,7 @@ vorpal.command('post <target>', 'Performs POST request').
     var reqConfig = createRequestConfig(target, args.options);
     // copy of command instance. Used to invoke logging in REST callback
     var cmd = this;
-    if(testConfig[target] != null){
+    if(defaultTestConfig[target] != null){
       unrest.post(reqConfig, function(output){
 	cmd.log(output);
 	callback();
@@ -136,7 +142,7 @@ vorpal.command('extract [object]', 'Extracts specific value from JSON object').
   option('-b, --body', 'Extracts response body').
   option('-s, --status', 'Extracts response status code').
   action(function(args, callback){
-    //console.log("extract: " + JSON.stringify(args.stdin));
+    
     var input = {};
     if(args.object != null){
       input = JSON.parse(args.object);
@@ -164,6 +170,29 @@ vorpal.command('extract [object]', 'Extracts specific value from JSON object').
     callback();
   });
   
-
+vorpal.command('save [object]', 'Saves specified object').
+  option('-s, --session <name>', 'Save object to session under specified name').
+  option('-f, --file <path>', 'Save object to file with specified path relative to current directory').
+  action(function(args, callback){
+    var input = {};
+    if(args.object != null){
+      input = JSON.parse(args.object);
+    } else if(args.stdin != null){
+      // stdin is array, we need first element
+      input = args.stdin[0];
+    }
+    if(args.options.session != null){
+      session[args.options.session] = input;
+    }
+    if(args.options.file != null){
+      fs.writeFile(args.options.file, input, function(err){
+	if(err) {
+	  return console.log(err);
+	}
+      });
+    }
+    
+    callback();
+  });
 
 vorpal.delimiter("unrest>").show();
