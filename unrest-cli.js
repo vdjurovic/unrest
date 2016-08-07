@@ -4,6 +4,7 @@ var unrest = require('./index.js');
 const vorpal = require('vorpal')();
 var fs = require('fs');
 var dummy = require('dummy-json');
+var prettyjson = require('prettyjson');
 
 var configFile = './unrest.config.json';
 var testConfigFile = './tests.json';
@@ -88,24 +89,37 @@ function createRequestConfig(target, options){
   return reqConfig;
 }
 
+function formatOutput(data, prettyPrint){
+  if(prettyPrint){
+    return prettyjson.render(data);
+  } else {
+    return data;
+  }
+}
+
 // set up commands
 vorpal.command('get <target> ', 'Performs GET request').
   option('-h, --header <value>', 'Set request header (format -h "Accept: application/json")').
   option('-p, --path-param <value>', 'Set value of REST path parameter (format -p "param=value")').
   option('-q, --query-param <value>', 'Set value of query parameter (format -q "param=value")').
+  option('-f, --format ', 'Pretty print output').
   action(function(args, callback){
    var target = args.target;
    var reqConfig = createRequestConfig(target, args.options);
+   var pretty = false;
+   if(args.options.format != null){
+     pretty = true;
+   }
   // copy of command instance. Used to invoke logging in REST callback
   var cmd = this;
   if(defaultTestConfig[target] != null){
     unrest.get(reqConfig, function(output){
-      cmd.log(output);
+      cmd.log(formatOutput(output, pretty));
       callback()
     });
   } else {
     unrest.getDirect(target, reqConfig, function(output){
-      cmd.log(output);
+      cmd.log(formatOutput(output, pretty));
       callback();
     });
   }
@@ -117,20 +131,82 @@ vorpal.command('post <target>', 'Performs POST request').
   option('-p, --path-param <value>', 'Set value of REST path parameter (format -p "param=value")').
   option('-q, --query-param <value>', 'Set value of query parameter (format -q "param=value")').
   option('-c, --req-content <value>', 'Set request body to be content of specified file').
+  option('-f, --format ', 'Pretty print output').
   action(function(args, callback){
     var target = args.target;
     var reqConfig = createRequestConfig(target, args.options);
+     var pretty = false;
+      if(args.options.format != null){
+	pretty = true;
+      }
     // copy of command instance. Used to invoke logging in REST callback
     var cmd = this;
     if(defaultTestConfig[target] != null){
       unrest.post(reqConfig, function(output){
-	cmd.log(output);
+	cmd.log(formatOutput(output, pretty));
 	callback();
       });
       
     } else {
       unrest.postDirect(target, reqConfig, function(output){
-	cmd.log(output);
+	cmd.log(formatOutput(output, pretty));
+	callback();
+      });
+    }
+    
+});
+  
+vorpal.command('put <target>', 'Performs PUT request').
+  option('-h, --header <value>', 'Set request header (format -h "Accept: application/json")').
+  option('-p, --path-param <value>', 'Set value of REST path parameter (format -p "param=value")').
+  option('-c, --req-content <value>', 'Set request body to be content of specified file').
+  option('-f, --format ', 'Pretty print output').
+  action(function(args, callback){
+    var target = args.target;
+    var reqConfig = createRequestConfig(target, args.options);
+     var pretty = false;
+      if(args.options.format != null){
+	pretty = true;
+      }
+    // copy of command instance. Used to invoke logging in REST callback
+    var cmd = this;
+    if(defaultTestConfig[target] != null){
+      unrest.put(reqConfig, function(output){
+	cmd.log(formatOutput(output, pretty));
+	callback();
+      });
+      
+    } else {
+      unrest.putDirect(target, reqConfig, function(output){
+	cmd.log(formatOutput(output, pretty));
+	callback();
+      });
+    }
+    
+});
+  
+vorpal.command('delete <target>', 'Performs DELETE request').
+  option('-h, --header <value>', 'Set request header (format -h "Accept: application/json")').
+  option('-p, --path-param <value>', 'Set value of REST path parameter (format -p "param=value")').
+  option('-f, --format ', 'Pretty print output').
+  action(function(args, callback){
+    var target = args.target;
+    var reqConfig = createRequestConfig(target, args.options);
+     var pretty = false;
+      if(args.options.format != null){
+	pretty = true;
+      }
+    // copy of command instance. Used to invoke logging in REST callback
+    var cmd = this;
+    if(defaultTestConfig[target] != null){
+      unrest.delete(reqConfig, function(output){
+	cmd.log(formatOutput(output, pretty));
+	callback();
+      });
+      
+    } else {
+      unrest.deleteDirect(target, reqConfig, function(output){
+	cmd.log(formatOutput(output, pretty));
 	callback();
       });
     }
@@ -195,4 +271,21 @@ vorpal.command('save [object]', 'Saves specified object').
     callback();
   });
 
+vorpal.command('env', "Show environment variables for curent session").
+  option('-t, --test <name>', 'Name of test case to display').
+  action(function(args, callback){
+    if(args.options.test != null){
+       var reqConfig = createRequestConfig(args.options.test, args.options);
+       this.log(prettyjson.render(reqConfig));
+    } else {
+      var env = {};
+      env.defaults = defaultConfig;
+      env.tests = defaultTestConfig;
+      env.session = session;
+      this.log(prettyjson.render(env));
+    }
+    
+    callback();
+  });
+  
 vorpal.delimiter("unrest>").show();

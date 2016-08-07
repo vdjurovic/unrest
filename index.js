@@ -1,6 +1,5 @@
 
 var RestClient = require('node-rest-client').Client;
-var prettyjson = require('prettyjson');
 
 
 var unrest = {};
@@ -76,19 +75,23 @@ unrest.put = function(config, callback) {
   });
 }
 
-unrest.delete = function() {
-  
+unrest.deleteDirect = function(url, config, callback){
+  var client = new RestClient(config);
+  client.delete(url, config, function(data, response){
+    var output = formatResponse(response, data);
+    callback(output);
+  });
 }
 
-var headerFiller = function(config, testConfig){
-  var headers = {};
-  for(var header in config.defaults.headers){
-    headers[header] = config.defaults.headers[header];
-  }
-  for(var header in testConfig.request.headers){
-     headers[header] = testConfig.request.headers[header];
-  }
-  return headers;
+unrest.delete = function(config, callback) {
+  var client = new RestClient(config);
+  var target = config.host + config.endpoint;
+
+  client.delete(target, config, function (data, response) {
+    var output = formatResponse(response, data);
+    callback(output);
+});
 }
+
 
 module.exports = unrest;
