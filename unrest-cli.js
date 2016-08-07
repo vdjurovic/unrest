@@ -5,17 +5,42 @@ const vorpal = require('vorpal')();
 var fs = require('fs');
 var dummy = require('dummy-json');
 var prettyjson = require('prettyjson');
+var commander = require('commander');
 
 var configFile = './unrest.config.json';
 var testConfigFile = './tests.json';
 
-//console.log("Directory: " + process.cwd());
+commander.version('1.0.0').
+  option('-d, --defaults <path>', 'Path to default configuration file').
+  option('-t, --tests <path>', 'Path to tests configuration file').
+  parse(process.argv);
+  
+if(commander.defaults){
+  configFile = commander.defaults;
+}
+
+if(commander.tests){
+  testConfigFile = commander.tests;
+}
 
 // load config file 
-//console.log("Reading default config file..")
-var defaultConfig = JSON.parse(fs.readFileSync(configFile));
-//console.log("Configuration file loaded");
-var defaultTestConfig = JSON.parse(fs.readFileSync(testConfigFile));
+var defaultConfig = {};
+fs.readFile(configFile, function(err, data){
+  if(err){
+    console.log("Could not load defaults configuration file: " + err.message);
+  } else {
+    defaultConfig = JSON.parse(data);
+  }
+});
+var defaultTestConfig = {};
+fs.readFile(testConfigFile, function(err, data){
+  if(err){
+    console.log("Could not load test configuration file: " + err.message);
+  } else {
+    defaultTestConfig = JSON.parse(data);
+  }
+});
+
 
 var session = {};
 
@@ -279,6 +304,8 @@ vorpal.command('env', "Show environment variables for curent session").
        this.log(prettyjson.render(reqConfig));
     } else {
       var env = {};
+      env.defaultConfigFile = configFile;
+      env.testConfigFile = testConfigFile;
       env.defaults = defaultConfig;
       env.tests = defaultTestConfig;
       env.session = session;

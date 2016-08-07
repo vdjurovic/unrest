@@ -17,6 +17,7 @@
   "author": "Vladimir Djurovic",
   "license": "MIT",
   "dependencies": {
+    "commander": "^2.9.0",
     "dummy-json": "^1.0.1",
     "node-rest-client": "^2.0.1",
     "prettyjson": "^1.1.3",
