@@ -82,7 +82,12 @@ function createRequestConfig(target, options){
     }
     // set body content
     if(testCase.body != null){
-      reqConfig.data = testCase.body.content;
+      if(testCase.body.content != null){
+	reqConfig.data = testCase.body.content;
+      } else if(testCase.body.file != null){
+	reqConfig.data = fs.readFileSync(testCase.body.file);
+      }
+      
     }
     
   } 
