@@ -46,18 +46,31 @@ var session = {};
 
 function dataFromCmdLineParams(data, delimiter){
   var out = {};
-  // strip possible single quotes
-  data = data.replace(/='/,"=").replace(/'$/,"");
+  
   if(Array.isArray(data)){
     for(var i = 0;i < data.length;i++){
-      var s = data[i].split(delimiter);
-      // trim value and remove starting/trailing single quote from string
-      out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "").replace(/\b\\'|\\'\b/g, "");
+      if(!(Object.prototype.toString.call(data[i]) === "[object String]")){
+	continue; // skip for empty parameter
+      }
+      // strip possible single quotes
+      var tmp = data[i].replace(/='/,"=").replace(/'$/,"");
+      var s = tmp.split(delimiter);
+      if(Array.isArray(s) && s.length > 1){
+	// trim value and remove starting/trailing single quote from string
+	out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "").replace(/\b\\'|\\'\b/g, "");
+      }
     }
   } else {
-     var s = data.split(delimiter);
-      // trim value and remove starting/trailing single quote from string
-      out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "").replace(/\b\'|\'\b/g, "");
+     if(Object.prototype.toString.call(data) === "[object String]"){
+       // strip possible single quotes
+      var tmp = data.replace(/='/,"=").replace(/'$/,"");
+      var s = tmp.split(delimiter);
+      if(Array.isArray(s) && s.length > 1){
+	  // trim value and remove starting/trailing single quote from string
+	  out[s[0].trim()] = s[1].trim().replace(/\b'|'\b/g, "").replace(/\b\'|\'\b/g, "");
+      }
+     }
+     
   }
   return out;
 }

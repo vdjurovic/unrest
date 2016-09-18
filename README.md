@@ -103,3 +103,60 @@ body:
       nostrum rerum est autem sunt rem eveniet architecto
     """
 ```
+### Parametrized GET
+You can specify custom template parameters for URL call. These will be replaced by unREST by values you specify for the call.
+```
+get http://jsonplaceholder.typicode.com/posts/${id} -p  "id=76"
+get http://jsonplaceholder.typicode.com/comments?postId=${postId} -p  "postId=1"
+```
+As you can see, you can parametrize both path and query string variables. This can come handy when scripting, as we will show in following sections.
+
+## Basic configuration
+unREST allows you to specify configuration options in files which are then used to execute HTTP requests. Generally, two configuration files are expected:
+* default configuration, which specifies options applied to all requests
+* per-request configuration options, which you can specify for each test independently
+
+Per-request configuration options override default options, and options passed from command line override those. So, the order of applying configuration options is:
+* default options
+* per-request options
+* command line options
+
+When unREST starts up, it expects to find two configuration files in current directory: `unrest.config.json` and `tests.json`. First file specifies default configuration options, and the other 
+per-test options (in this context, test is considered to be one pre-configured HTTP request).
+
+You can specify different configuration files by starting unREST with options `-d`, which specifies path to default configuration, and `-t`, which specifies path to per-test. configuration.
+
+```
+unrest -d ../path/to default.json -t path/to/mytest.json
+```
+
+Paths to these files are relatve to current working directory.
+
+### Default configuration
+
+Configuration is in JSON format. The code snippet bellow display sample default configuration files:
+
+```
+{
+  "defaults": {
+      "headers": {
+      "Accept":"application/json",
+      "x-custom": "my-custom-header"
+    },
+    "host": "https://somehost.com"
+  },
+  "client": {
+    "connection": {
+       "rejectUnauthorized": false
+    }
+  }
+}
+```
+
+Section `deafults` specifies headers to apply to each request, and default target host. This allows you to specify only request paths, without host part.
+
+Section `client` defines network options for HTTP client used in application. unREST uses [node-rest-client](https://github.com/aacerox/node-rest-client) module for making HTTP requests. 
+For configuing `client` section, you can use all request/response configuration options used for this client (refer to node-rest-client project page for supported options). In this example, we set 
+options `rejectUnauthorized` to `false`, which allows the client to accept self-signed SSL certificates for HTTPS requests.
+
+### Per-test configuration
