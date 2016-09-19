@@ -295,7 +295,12 @@ vorpal.command('save [object]', 'Saves specified object').
   action(function(args, callback){
     var input = {};
     if(args.object != null){
-      input = JSON.parse(args.object);
+      try {
+	input = JSON.parse(args.object);
+      } catch(e){
+	input = args.object;
+      }
+      
     } else if(args.stdin != null){
       // stdin is array, we need first element
       input = args.stdin[0];
