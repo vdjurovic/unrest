@@ -158,7 +158,7 @@ vorpal.command('get <target> ', 'Performs GET request').
   if(defaultTestConfig[target] != null){
     unrest.get(reqConfig, function(output){
       cmd.log(formatOutput(output, pretty));
-      callback()
+      callback();
     });
   } else {
     unrest.getDirect(target, reqConfig, function(output){

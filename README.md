@@ -7,9 +7,9 @@ There are a lot of nice looking GUI clients with a lot of useful features, so wh
 To answer this question, only two words: **scripting** and **automation**. unREST allows you to create custom configurations and workflows to streamline common tasks involved intesting your services. For examples, you can parametrize service invocations, extract and process output, parametrize request content and much more. Please read on for samples of application usage.
 
 # Installation
-*Warning:* This module is not available in NPM yet, so you will need to run it from source code. The easiest way:
+
 ```
-nodejs unrest-cli.js
+npm install unrest
 ```
 
 For documentation, please visit the [wiki](https://github.com/vdjurovic/unrest/wiki).
