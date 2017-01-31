@@ -9,7 +9,7 @@ To answer this question, only two words: **scripting** and **automation**. unRES
 # Installation
 
 ```
-npm install unrest
+npm install unrestjs
 ```
 
 For documentation, please visit the [wiki](https://github.com/vdjurovic/unrest/wiki).

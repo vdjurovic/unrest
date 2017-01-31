@@ -1,5 +1,5 @@
 {
-  "name": "unrest",
+  "name": "unrestjs",
   "version": "1.0.0",
   "description": "CLI REST client",
   "main": "index.js",
